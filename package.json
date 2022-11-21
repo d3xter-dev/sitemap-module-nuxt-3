@@ -35,6 +35,7 @@
   "type": "module",
   "main": "dist/module.cjs",
   "module": "dist/module.mjs",
+  "types": "dist/types.d.ts",
   "scripts": {
     "build-module": "nuxt-build-module && yarn unit",
     "build": "npx nuxi build test/fixture",

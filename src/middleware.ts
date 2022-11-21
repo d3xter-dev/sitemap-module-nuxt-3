@@ -1,25 +1,26 @@
+import type { Nuxt } from '@nuxt/schema'
 import { addServerHandler, createResolver } from '@nuxt/kit'
 import logger from './runtime/logger'
 import { setDefaultSitemapIndexOptions, setDefaultSitemapOptions } from './options'
+import type { SitemapOptions, SitemapIndexOptions, GlobalCache } from './module'
+import { isSitemapIndex } from './helpers'
 
 /**
  * Register a middleware for each sitemap or sitemapindex
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export function registerSitemaps(options, globalCache, nuxtInstance, depth = 0) {
+export function registerSitemaps(
+  options: SitemapOptions | SitemapIndexOptions,
+  globalCache: GlobalCache,
+  nuxtInstance: Nuxt,
+  depth = 0
+) {
   /* istanbul ignore if */
   if (depth > 1) {
     // see https://webmasters.stackexchange.com/questions/18243/can-a-sitemap-index-contain-other-sitemap-indexes
     logger.warn("A sitemap index file can't list other sitemap index files, but only sitemap files")
   }
 
-  const isSitemapIndex = options && options.sitemaps && Array.isArray(options.sitemaps) && options.sitemaps.length > 0
-
-  if (isSitemapIndex) {
+  if (isSitemapIndex(options)) {
     registerSitemapIndex(options, globalCache, nuxtInstance, depth)
   } else {
     registerSitemap(options, globalCache, nuxtInstance, depth)
@@ -28,13 +29,8 @@ export function registerSitemaps(options, globalCache, nuxtInstance, depth = 0) 
 
 /**
  * Register a middleware to serve a sitemap
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export function registerSitemap(options, globalCache, nuxtInstance, depth = 0) {
+export function registerSitemap(options: SitemapOptions, globalCache: GlobalCache, nuxtInstance: Nuxt, depth = 0) {
   // Init options
   options = setDefaultSitemapOptions(options, nuxtInstance, depth > 0)
   options = prepareOptionPaths(options, nuxtInstance)
@@ -64,13 +60,13 @@ export function registerSitemap(options, globalCache, nuxtInstance, depth = 0) {
 
 /**
  * Register a middleware to serve a sitemapindex
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export function registerSitemapIndex(options, globalCache, nuxtInstance, depth = 0) {
+export function registerSitemapIndex(
+  options: SitemapIndexOptions,
+  globalCache: GlobalCache,
+  nuxtInstance: Nuxt,
+  depth = 0
+) {
   // Init options
   options = setDefaultSitemapIndexOptions(options, nuxtInstance)
   options = prepareOptionPaths(options, nuxtInstance)
@@ -100,7 +96,7 @@ export function registerSitemapIndex(options, globalCache, nuxtInstance, depth =
   options.sitemaps.forEach((sitemapOptions) => registerSitemaps(sitemapOptions, globalCache, nuxtInstance, depth + 1))
 }
 
-function prepareOptionPaths(options, nuxtInstance) {
+function prepareOptionPaths<T extends SitemapOptions | SitemapIndexOptions>(options: T, nuxtInstance: Nuxt): T {
   options.base = nuxtInstance.options.app.baseURL || '/'
   options.path = options.base !== '/' || options.path.startsWith('/') ? options.path : '/' + options.path
   options.pathGzip =

@@ -1,3 +1,5 @@
+import type { Nuxt } from '@nuxt/schema'
+import type { SitemapIndexOptions, SitemapOptions } from './module'
 import logger from './runtime/logger'
 
 const MODULE_NAME = 'Nuxt 3 Sitemap Module'
@@ -5,14 +7,13 @@ const DEFAULT_NUXT_PUBLIC_PATH = '/_nuxt/'
 
 /**
  * Set default options for a sitemap config
- *
- * @param   {Object}  options
- * @param   {Nuxt}    nuxtInstance
- * @param   {boolean} isLinkedToSitemapIndex
- * @returns {Object}
  */
-export function setDefaultSitemapOptions(options, nuxtInstance, isLinkedToSitemapIndex = false) {
-  const defaults = {
+export function setDefaultSitemapOptions(
+  options: SitemapOptions,
+  nuxtInstance: Nuxt,
+  isLinkedToSitemapIndex = false
+): SitemapOptions {
+  const defaults: SitemapOptions = {
     path: '/sitemap.xml',
     hostname:
       // TODO: remove support of "build.publicPath" on release 3.0
@@ -35,7 +36,7 @@ export function setDefaultSitemapOptions(options, nuxtInstance, isLinkedToSitema
     base: '/',
   }
 
-  const sitemapOptions = {
+  const sitemapOptions: SitemapOptions = {
     ...defaults,
     ...options,
   }
@@ -86,13 +87,9 @@ export function setDefaultSitemapOptions(options, nuxtInstance, isLinkedToSitema
 
 /**
  * Set default options for a sitemapindex config
- *
- * @param   {Object} options
- * @param   {Nuxt}   nuxtInstance
- * @returns {Object}
  */
-export function setDefaultSitemapIndexOptions(options, nuxtInstance) {
-  const defaults = {
+export function setDefaultSitemapIndexOptions(options: SitemapIndexOptions, nuxtInstance: Nuxt): SitemapIndexOptions {
+  const defaults: SitemapIndexOptions = {
     path: '/sitemapindex.xml',
     hostname: undefined,
     sitemaps: [],
@@ -104,7 +101,7 @@ export function setDefaultSitemapIndexOptions(options, nuxtInstance) {
     base: '/',
   }
 
-  const sitemapIndexOptions = {
+  const sitemapIndexOptions: SitemapIndexOptions = {
     ...defaults,
     ...options,
   }

@@ -1,4 +1,5 @@
-module.exports = {
+// eslint-disable-next-line no-undef
+module.exports = defineNuxtConfig({
   srcDir: __dirname,
   render: {
     resourceHints: false,
@@ -43,4 +44,4 @@ module.exports = {
       ],
     },
   ],
-}
+})

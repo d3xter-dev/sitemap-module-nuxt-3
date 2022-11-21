@@ -7,13 +7,48 @@ import { generateSitemaps } from './generator'
 import logger from './runtime/logger'
 import { registerSitemaps } from './middleware'
 import { getStaticRoutes } from './runtime/routes'
+import { Nuxt } from '@nuxt/schema'
 
-type ModuleOptions = {
+// TODO: WIP
+export interface SitemapOptions {
+  path?: string
+  pathGzip?: string
+  hostname?: string
+  exclude?: string[]
+  routes?: any[]
+  cacheTime?: number
+  etag?: any
+  filter?: ({ options, routes }: { options: SitemapOptions; routes: any[] }) => boolean
+  gzip?: boolean
+  xmlNs?: string
+  xslUrl?: string
+  trailingSlash?: false
+  lastmod?: string
+  i18n?: any
+  defaults?: any
+  base?: any
   generateOnBuild?: boolean
+  /** @deprecated */
+  generate?: boolean
 }
 
-export default defineNuxtModule({
-  async setup(moduleOptions: ModuleOptions, nuxtInstance) {
+export interface SitemapIndexOptions extends SitemapOptions {
+  sitemaps: SitemapOptions[]
+}
+
+export type ModuleOptions = SitemapOptions | SitemapIndexOptions
+
+export type GlobalCache = {
+  staticRoutes: any[]
+  options: Record<string, ModuleOptions>
+}
+
+export default defineNuxtModule<ModuleOptions>({
+  meta: {
+    name: 'sitemap',
+    configKey: 'sitemap',
+  },
+  async setup(moduleOptions, nuxtInstance) {
     // Init options
     const options = await initOptions(nuxtInstance, moduleOptions)
     if (options === false) {
@@ -27,7 +62,7 @@ export default defineNuxtModule({
       ? path.resolve(nuxtInstance.options.buildDir, path.join('dist', 'sitemap-routes.json'))
       : null
     const staticRoutes = fs.readJsonSync(jsonStaticRoutesPath, { throws: false })
-    const globalCache = { staticRoutes, options: {} }
+    const globalCache: GlobalCache = { staticRoutes, options: {} }
 
     // Init static routes
     nuxtInstance.hook('pages:extend', (routes) => {
@@ -43,7 +78,7 @@ export default defineNuxtModule({
     nuxtInstance.hook('nitro:build:before', async (nitro) => {
       nitro.options.runtimeConfig.sitemap = {
         options: await optionsToString(globalCache.options),
-        staticRoutes: globalCache.staticRoutes
+        staticRoutes: globalCache.staticRoutes,
       }
 
       let isPreRender = false
@@ -52,14 +87,14 @@ export default defineNuxtModule({
           globalCache.staticRoutes.push({ url: ctx.route, path: ctx.route, name: ctx.route.replaceAll('/', '-') })
           nitro.options.runtimeConfig.sitemap = {
             options: nitro.options.runtimeConfig.sitemap.options,
-            staticRoutes: globalCache.staticRoutes
+            staticRoutes: globalCache.staticRoutes,
           }
           isPreRender = true
         }
       })
 
       nitro.hooks.hook('close', async () => {
-        if(isPreRender || moduleOptions.generateOnBuild) {
+        if (isPreRender || moduleOptions.generateOnBuild) {
           // On "generate" mode, generate static files for each sitemap or sitemapindex
           await nuxtInstance.callHook('sitemap:generate:before' as any, nuxtInstance, options)
           logger.info('Generating sitemaps')
@@ -73,7 +108,7 @@ export default defineNuxtModule({
     options.forEach((options) => {
       registerSitemaps(options, globalCache, nuxtInstance)
     })
-  }
+  },
 })
 
 async function optionsToString(options) {
@@ -106,7 +141,7 @@ async function optionsToString(options) {
 
   if (typeof options === 'function') {
     const code = transformSync(options, {
-      minified: true
+      minified: true,
     })
     return code.code.slice(0, -1)
   }
@@ -122,15 +157,19 @@ async function optionsToString(options) {
   return `'${options.toString()}'`
 }
 
-async function initOptions(nuxtInstance, moduleOptions) {
+async function initOptions(
+  nuxtInstance: Nuxt,
+  moduleOptions: (() => Promise<ModuleOptions | false>) | ModuleOptions | false
+): Promise<ModuleOptions[] | false> {
   if (nuxtInstance.options.sitemap === false || moduleOptions === false) {
     return false
   }
 
-  let options = nuxtInstance.options.sitemap || moduleOptions
+  let options: (() => Promise<ModuleOptions | false>) | ModuleOptions | false =
+    nuxtInstance.options.sitemap || moduleOptions
 
   if (typeof options === 'function') {
-    options = await options.call(nuxtInstance)
+    options = (await options.call(nuxtInstance)) as ModuleOptions | false
   }
 
   if (options === false) {
@@ -138,4 +177,23 @@ async function initOptions(nuxtInstance, moduleOptions) {
   }
 
   return Array.isArray(options) ? options : [options]
+}
+
+declare module '@nuxt/schema' {
+  // eslint-disable-next-line no-unused-vars
+  interface ConfigSchema {
+    publicRuntimeConfig?: {
+      sitemap?: ModuleOptions | false
+    }
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  interface NuxtConfig {
+    ['sitemap']?: Partial<ModuleOptions> | false
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  interface NuxtOptions {
+    ['sitemap']?: ModuleOptions | false
+  }
 }
