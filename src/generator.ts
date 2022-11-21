@@ -27,7 +27,7 @@ export async function generateSitemaps(options, globalCache, nuxtInstance, depth
     nuxtInstance.options.generate.dir = nuxtInstance.options.srcDir
   }
 
-  const publicDir = '/.output/public'
+  const publicDir = path.relative(nuxtInstance.options.generate.dir, nuxtInstance._nitro.options.output.publicDir)
 
   const isSitemapIndex = options && options.sitemaps && Array.isArray(options.sitemaps) && options.sitemaps.length > 0
 
