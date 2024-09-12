@@ -1,3 +1,11 @@
+# THIS PROJECT IS ARCHIVED
+Use https://nuxt.com/modules/sitemap for the newest official version.
+#
+#
+#
+
+
+
 [![@nuxtjs/sitemap](docs/static/preview.png)](https://sitemap.nuxtjs.org)
 
 # Sitemap Module
