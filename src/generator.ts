@@ -2,21 +2,24 @@ import path from 'path'
 import { gzipSync } from 'zlib'
 // eslint-disable-next-line import/default
 import fs from 'fs-extra'
+import type { Nuxt } from '@nuxt/schema'
 import { createSitemap, createSitemapIndex } from './runtime/builder'
 import { createRoutesCache } from './runtime/cache'
 import logger from './runtime/logger'
 import { setDefaultSitemapIndexOptions, setDefaultSitemapOptions } from './options'
 import { excludeRoutes } from './runtime/routes'
+import { ModuleOptions, SitemapIndexOptions, SitemapOptions, GlobalCache } from './module'
+import { isSitemapIndex } from './helpers'
 
 /**
  * Generate a static file for each sitemap or sitemapindex
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export async function generateSitemaps(options, globalCache, nuxtInstance, depth = 0) {
+export async function generateSitemaps(
+  options: ModuleOptions,
+  globalCache: GlobalCache,
+  nuxtInstance: Nuxt,
+  depth = 0
+): Promise<void> {
   /* istanbul ignore if */
   if (depth > 1) {
     // see https://webmasters.stackexchange.com/questions/18243/can-a-sitemap-index-contain-other-sitemap-indexes
@@ -29,9 +32,7 @@ export async function generateSitemaps(options, globalCache, nuxtInstance, depth
 
   const publicDir = '/.output/public'
 
-  const isSitemapIndex = options && options.sitemaps && Array.isArray(options.sitemaps) && options.sitemaps.length > 0
-
-  if (isSitemapIndex) {
+  if (isSitemapIndex(options)) {
     await generateSitemapIndex(options, globalCache, nuxtInstance, depth, publicDir)
   } else {
     await generateSitemap(options, globalCache, nuxtInstance, depth, publicDir)
@@ -40,13 +41,14 @@ export async function generateSitemaps(options, globalCache, nuxtInstance, depth
 
 /**
  * Generate a sitemap file
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export async function generateSitemap(options, globalCache, nuxtInstance, depth = 0, publicDir) {
+export async function generateSitemap(
+  options: SitemapOptions,
+  globalCache: GlobalCache,
+  nuxtInstance: Nuxt,
+  depth = 0,
+  publicDir: string
+): Promise<void> {
   // Init options
   options = setDefaultSitemapOptions(options, nuxtInstance, depth > 0)
 
@@ -73,13 +75,14 @@ export async function generateSitemap(options, globalCache, nuxtInstance, depth 
 
 /**
  * Generate a sitemapindex file
- *
- * @param {Object} options
- * @param {Object} globalCache
- * @param {Nuxt}   nuxtInstance
- * @param {number} depth
  */
-export async function generateSitemapIndex(options, globalCache, nuxtInstance, depth = 0, publicDir) {
+export async function generateSitemapIndex(
+  options: SitemapIndexOptions,
+  globalCache: GlobalCache,
+  nuxtInstance: Nuxt,
+  depth = 0,
+  publicDir: string
+): Promise<void> {
   // Init options
   options = setDefaultSitemapIndexOptions(options, nuxtInstance)
 
@@ -106,11 +109,7 @@ export async function generateSitemapIndex(options, globalCache, nuxtInstance, d
 
 /**
  * Convert a file path to a URL pathname
- *
- * @param   {string} dirPath
- * @param   {string} filePath
- * @returns {string}
  */
-function getPathname(dirPath, filePath) {
+function getPathname(dirPath: string, filePath: string): string {
   return [, ...path.relative(dirPath, filePath).split(path.sep)].join('/')
 }
